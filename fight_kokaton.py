@@ -40,6 +40,27 @@ class Score:
         #スコアを画面に描く
         screen.blit(self.img, self.rect)
 
+class Explosion:
+    def __init__(self, center: tuple[int, int]):
+        self.images = [
+            pg.image.load("fig/explosion.gif"),
+            pg.transform.flip(pg.image.load("fig/explosion.gif"), True, False),
+            pg.transform.flip(pg.image.load("fig/explosion.gif"), False, True),
+            pg.transform.flip(pg.image.load("fig/explosion.gif"), True, True),
+        ]
+        self.rct = self.images[0].get_rect()
+        self.rct.center = center.rct.center
+        self.life = 30  # 表示時間（爆発時間）
+
+    def update(self):
+        if self.life > 0:
+            self.life -= 1
+
+    def draw(self, screen):
+        if self.life > 0:
+            img = self.images[self.life % len(self.images)]
+            screen.blit(img, self.rct)
+
 class Bird:
     """
     ゲームキャラクター（こうかとん）に関するクラス
@@ -165,9 +186,11 @@ def main():
     #bomb = Bomb((255, 0, 0), 10)
     bombs = [Bomb((255, 0, 0), 10) for _ in range(NUM_OF_BOMBS)]
     score = Score() #スコアインスタンスを生成する
+    explosions = [] # Explosionインスタンス用の空リスト
     clock = pg.time.Clock()
     tmr = 0
     beam = None
+
     while True:
         for event in pg.event.get():
             if event.type == pg.QUIT:
@@ -190,15 +213,16 @@ def main():
                 time.sleep(5)
                 return
             
-        #if beam is not None:
+        if beam is not None:
             #if bomb is not None:
-        for j,bomb in enumerate(bombs):
-            if beam is not None:
-                if beam.rct.colliderect(bomb.rct): #ビームと爆弾が衝突したら
-                    beam,bombs[j] = None,None
-                    bird.change_img(6,screen)
-                    score.score += 1 #スコアを1加算
-                    pg.display.update()
+            for j,bomb in enumerate(bombs):
+                if beam is not None:
+                    if beam.rct.colliderect(bomb.rct): #ビームと爆弾が衝突したら
+                        beam,bombs[j] = None,None
+                        bird.change_img(6,screen)
+                        explosions.append(Explosion(bomb))
+                        score.score += 1 #スコアを1加算
+                        pg.display.update()
         bombs = [bomb for bomb in bombs if bombs if bomb is not None]
 
         key_lst = pg.key.get_pressed()
@@ -211,6 +235,12 @@ def main():
 
         score.update() #スコアを更新
         score.draw(screen) #スコアを描く
+
+        # 爆発エフェクトの更新と描画
+        explosions = [exp for exp in explosions if exp.life > 0]  # lifeが0より大きいExplosionインスタンスだけのリスト
+        for exp in explosions:
+            exp.update()  # 更新
+            exp.draw(screen)  # 描画
 
         pg.display.update()
         tmr += 1
