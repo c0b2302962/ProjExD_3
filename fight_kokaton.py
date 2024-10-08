@@ -50,7 +50,7 @@ class Explosion:
         ]
         self.rct = self.images[0].get_rect()
         self.rct.center = center.rct.center
-        self.life = 30  # 表示時間（爆発時間）
+        self.life = 40  # 表示時間（爆発時間）
 
     def update(self):
         if self.life > 0:
